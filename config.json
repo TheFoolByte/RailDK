@@ -1,0 +1,27 @@
+{
+  "root_password": "",
+  "app_lang": "id",
+  "ssh_username": "",
+  "ssh_password": "",
+  "authorized_keys": "",
+  "github_token": "",
+  "github_repo": "",
+  "github_sync_email": "System@Sync",
+  "github_sync_name": "Railways VPS Sync",
+  "sync_interval": 180,
+  "ninerouter": {
+    "enabled": true,
+    "port": 20128,
+    "hostname": "0.0.0.0",
+    "require_api_key": false,
+    "data_dir": "/root/.9router"
+  },
+  "hermes": {
+    "enabled": true,
+    "dashboard_port": 8686,
+    "dashboard_enabled": true,
+    "gateway_auto_start": true,
+    "github_repo": "",
+    "sync_interval": 180
+  }
+}

@@ -1,0 +1,120 @@
+{
+  "name": "XD VPS · Ubuntu SSH + 9router",
+  "description": "Ubuntu 24.04 SSH VPS di Railway. Root langsung, password default Kurr123@. Setup AI di UI web 9router. Dev: KurrXd.",
+  "readme": "# Railway Ubuntu Docker\n\nUbuntu SSH + 9router di Railway. Klik Deploy, variabel boleh kosong.\n\nPassword default: `Kurr123@`\n\n- SSH TCP port 22\n- 9router HTTP port 20128\n- Backup opsional: `GITHUB_TOKEN` + `GITHUB_REPO` (kosong = auto-buat repo)\n\nRepo: https://github.com/asepbalon121221/RailwayUBUNTUDOCKER\n\n© XD VPS · KurrXd",
+  "services": [
+    {
+      "name": "xd-vps",
+      "source": {
+        "repo": "https://github.com/asepbalon121221/RailwayUBUNTUDOCKER",
+        "branch": "main"
+      },
+      "build": {
+        "builder": "DOCKERFILE",
+        "dockerfilePath": "Dockerfile",
+        "buildContext": ".",
+        "watchPatterns": [
+          "Dockerfile",
+          "ssh-user-config.sh",
+          "src-sync.sh",
+          "usage",
+          "xd-welcome.sh",
+          "config.json"
+        ]
+      },
+      "deploy": {
+        "startCommand": "/usr/local/bin/ssh-user-config.sh",
+        "restartPolicyType": "ON_FAILURE",
+        "restartPolicyMaxRetries": 10,
+        "healthcheckTimeout": 150,
+        "sleepApplicationStop": true,
+        "multiRegion": false
+      },
+      "networking": {
+        "restricted": false
+      },
+      "variables": {
+        "ROOT_PASSWORD": {
+          "required": false,
+          "secret": true,
+          "defaultValue": "Kurr123@",
+          "description": "Password root + login dashboard 9router. Kosong = Kurr123@."
+        },
+        "GITHUB_TOKEN": {
+          "required": false,
+          "secret": true,
+          "description": "Token GitHub (scope repo). Wajib kalau mau backup. PAT: ghp_..."
+        },
+        "GITHUB_REPO": {
+          "required": false,
+          "secret": false,
+          "description": "Repo backup: owner/name atau URL. Kosong = auto-buat xd-vps-src-<id>. Launch: restore sekali, lalu auto-backup."
+        },
+        "AUTHORIZED_KEYS": {
+          "required": false,
+          "secret": true,
+          "description": "SSH public key untuk root. Opsional. Password tetap aktif."
+        },
+        "SSH_USERNAME": {
+          "required": false,
+          "secret": false,
+          "description": "User sudo tambahan. Isi bareng SSH_PASSWORD."
+        },
+        "SSH_PASSWORD": {
+          "required": false,
+          "secret": true,
+          "description": "Password user sudo tambahan. Isi bareng SSH_USERNAME."
+        },
+        "SYNC_INTERVAL": {
+          "required": false,
+          "secret": false,
+          "defaultValue": "180",
+          "description": "Jeda sync /root/src (detik). Hanya dipakai kalau GITHUB_TOKEN diisi."
+        },
+        "HERMES_ENABLED": {
+          "required": false,
+          "secret": false,
+          "defaultValue": "true",
+          "description": "Aktifkan Hermes Agent CLI, Web Dashboard, dan Gateway."
+        },
+        "HERMES_GITHUB_REPO": {
+          "required": false,
+          "secret": false,
+          "description": "Repo privat backup Hermes (state.db, memory, config). Kosong = auto buat xd-vps-hermes-<id>."
+        },
+        "HERMES_DASHBOARD_PORT": {
+          "required": false,
+          "secret": false,
+          "defaultValue": "8686",
+          "description": "Port web dashboard Hermes."
+        },
+        "APP_LANG": {
+          "required": false,
+          "secret": false,
+          "defaultValue": "id",
+          "description": "Bahasa log: id atau en."
+        }
+      }
+    }
+  ],
+  "proxy": {
+    "application": "xd-vps",
+    "ports": [
+      {
+        "port": 22,
+        "protocol": "tcp",
+        "service": "xd-vps"
+      },
+      {
+        "port": 20128,
+        "protocol": "http",
+        "service": "xd-vps"
+      },
+      {
+        "port": 8686,
+        "protocol": "http",
+        "service": "xd-vps"
+      }
+    ]
+  }
+}
