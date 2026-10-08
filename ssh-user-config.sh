@@ -107,6 +107,33 @@ start_hermes() {
     [ "$HERMES_ON" = "true" ] || [ "$HERMES_ON" = "1" ] || return 0
     mkdir -p /root/.hermes/logs
 
+    # Setup dashboard basic_auth so 0.0.0.0 public bind is permitted
+    local hermes_cfg=/root/.hermes/config.yaml
+    if [ ! -f "$hermes_cfg" ]; then
+        mkdir -p /root/.hermes
+        echo "dashboard: {}" > "$hermes_cfg"
+    fi
+
+    # Hash ROOT_PASSWORD using hermes internal python environment
+    local hermes_py
+    hermes_py=$(readlink -f "$(command -v hermes)" 2>/dev/null | sed 's#/bin/hermes$#/bin/python#')
+    [ -x "$hermes_py" ] || hermes_py="python3"
+
+    local pass_hash
+    pass_hash=$("$hermes_py" -c "
+try:
+    from plugins.dashboard_auth.basic import hash_password
+    print(hash_password('''$ROOT_PASSWORD'''))
+except Exception:
+    import hashlib
+    print('sha256$' + hashlib.sha256('''$ROOT_PASSWORD'''.encode()).hexdigest())
+" 2>/dev/null)
+
+    if [ -n "$pass_hash" ]; then
+        hermes config set dashboard.basic_auth.username "root" 2>/dev/null || true
+        hermes config set dashboard.basic_auth.password_hash "$pass_hash" 2>/dev/null || true
+    fi
+
     # Auto start hermes gateway service if configured and enabled
     if [ "$HERMES_GATEWAY_ON" = "true" ] || [ "$HERMES_GATEWAY_ON" = "1" ]; then
         nohup hermes gateway run >/var/log/hermes-gateway.log 2>&1 &
@@ -116,9 +143,9 @@ start_hermes() {
 
     # Auto start hermes dashboard web ui if enabled
     if [ "$HERMES_DASH_ON" = "true" ] || [ "$HERMES_DASH_ON" = "1" ]; then
-        nohup hermes dashboard --port "$HERMES_DASH_PORT" --host 0.0.0.0 >/var/log/hermes-dashboard.log 2>&1 &
-        msg "Hermes Dashboard UI :$HERMES_DASH_PORT" \
-            "Hermes Dashboard UI :$HERMES_DASH_PORT"
+        nohup hermes dashboard --port "$HERMES_DASH_PORT" --host 0.0.0.0 --no-open >/var/log/hermes-dashboard.log 2>&1 &
+        msg "Hermes Dashboard UI :$HERMES_DASH_PORT (user: root)" \
+            "Hermes Dashboard UI :$HERMES_DASH_PORT (user: root)"
     fi
 }
 
